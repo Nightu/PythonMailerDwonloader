@@ -1,0 +1,9 @@
+{
+  "mailbox_user": "",
+  "mailbox_passwd": "",
+  "mailbox_host": "",
+  "mailbox_port": "993",
+  "mailbox_use_ssl": "true",
+  "mailbox_init_download": "true",
+  "use_debug": "true"
+}
