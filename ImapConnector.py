@@ -1,6 +1,6 @@
 # %%
 from json import dumps, dump, loads
-from os import remove, path, makedirs
+from os import remove, path, makedirs, chown, getenv, walk
 from ssl import create_default_context
 from datetime import date, datetime
 from re import sub
@@ -69,6 +69,15 @@ class ImapConnector:
                         .replace('\\t', ''))
                 dump(json_file, f)
 
+    def change_permission(self, object_path):
+        chown(object_path, 1000, 1000) if getenv('user_remap') == 'true' \
+            else chown(object_path, 33, 33)
+
+    def change_permission_by_dir(self, object_path):
+        for root, subdirs, files in walk(f"{self.mailer_path}/{object_path}"):
+            print(root)
+            self.change_permission(root)
+
     def create_catalogs_with_file(self):
         self.logger.info(f'Found {len(self.mail_json_loader.keys())} emails.')
         for mail in self.mail_json_loader:
@@ -82,18 +91,25 @@ class ImapConnector:
                                                f"-{format_subject}{added_number}.json"
             for single_path in path_list:
                 if not path.exists(single_path):
+                    self.logger.info(f"Create path for: {single_path}")
                     makedirs(single_path)
+                    self.logger.info(f"{single_path.split('/')[2]},{single_path.split('/')}")
+                    self.change_permission_by_dir(single_path.split('/')[2])
+
                 if path.isfile(f"{single_path}/{set_current_processing_file_name}"):
                     added_number += 1
                     set_current_processing_file_name = f"{current_processing_mail.get('from')}" \
                                                        f"-{format_subject}{added_number}.json"
+
                 else:
-                    with open(f"{single_path}/{set_current_processing_file_name}", 'x') as f:
+                    current_file = f"{single_path}/{set_current_processing_file_name}"
+                    with open(current_file, 'x') as f:
                         json_file = loads(dumps(current_processing_mail, sort_keys=True)
                                           .replace('\\n', '')
                                           .replace('\\r', '')
                                           .replace('\\t', ''))
                         dump(json_file, f)
+                        self.change_permission(current_file)
 
     def start_parsing_mail_from_mailbox(self, __mail_user: str, __mail_passwd: str, __mailbox_host: str,
                                         __mailbox_port: int, init_mail_download: bool, __mailbox_use_ssl: bool = False,
