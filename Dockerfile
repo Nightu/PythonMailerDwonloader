@@ -34,7 +34,5 @@ COPY . .
 RUN mkdir $webdav_path && \
     chown 33:33 $webdav_path
 
-#CMD service pythonmailer start && \
-#    nginx -g "daemon off;"
 CMD systemctl start pythonmailer.service && \
     nginx -g "daemon off;"
